@@ -1,0 +1,142 @@
+database: /var/lib/maddash/
+
+serverHost: "localhost"
+
+http: 
+    port: 8881
+
+groups:
+
+    myHosts :
+        - "8.8.8.8"
+        - "1.2.3.4"
+        - "1.1.1.1"
+    
+
+
+groupMembers:
+
+checks:
+    owampLossCheck :
+        name: "Loss"
+        description: "Loss from %row to %col (according to %row MA)"
+        type: "net.es.maddash.checks.PSNagiosCheck"
+        params:
+            maUrl: 
+                default: "http://%row/esmond/perfsonar/archive"
+            graphUrl: "https://%row/perfsonar-graphs/?url=%maUrl&dest=%col&source=%row"
+            command: "/usr/lib64/nagios/plugins/check_owdelay.pl -u %maUrl -w 2 -c 10 -r 1800 -l -p -s %row -d %col"
+        checkInterval: 60
+        retryInterval: 30
+        retryAttempts: 3
+        timeout: 60
+    
+    owampLossRevCheck :
+        added_by_psconfig: 1 # remove this if you want to keep after psconfig runs
+        name: "Loss Reverse"
+        description: "Loss from %col to %row (according to %row MA)"
+        type: "net.es.maddash.checks.PSNagiosCheck"
+        params:
+            maUrl:
+                default: "https://%row/esmond/perfsonar/archive"
+            graphUrl: "https://%row/perfsonar-graphs/?url=%maUrl&dest=%row&source=%col"
+            command: "/usr/lib64/nagios/plugins/check_owdelay.pl -u %maUrl -w 2 -c 10 -r 900 -l -p -s %col -d %row"
+        checkInterval: 60
+        retryInterval: 30
+        retryAttempts: 3
+        timeout: 60
+    
+    throughputCheck :
+        name: "Throughput"
+        description: "Throughput from %row to %col (according to %row MA)"
+        type: "net.es.maddash.checks.PSNagiosCheck"
+        params:
+            maUrl:
+                default: "https://%row/esmond/perfsonar/archive"
+            graphUrl: "https://%row/perfsonar-graphs/?url=%maUrl&dest=%col&source=%row"
+            #Adjust the -w and -c values to adjust the thresholds. The thresholds are specified in Gbps.
+            command:  "/usr/lib64/nagios/plugins/check_throughput.pl -u %maUrl -w .1: -c .01: -r 86400 -s %row -d %col"
+
+        checkInterval: 60
+        retryInterval: 30
+        retryAttempts: 3
+        timeout: 60
+
+    throughputRevCheck :
+        added_by_psconfig: 1 # remove this if you want to keep after psconfig runs
+        name: "Throughput Reverse"
+        description: "Throughput from %col to %row (according to %row MA)"
+        type: "net.es.maddash.checks.PSNagiosCheck"
+        params:
+            maUrl:
+                default: "https://%row/esmond/perfsonar/archive"
+            graphUrl: "https://%row/perfsonar-graphs/?url=%maUrl&dest=%row&source=%col"
+            #Adjust the -w and -c values to adjust the thresholds. The thresholds are specified in Gbps.
+            command:  "/usr/lib64/nagios/plugins/check_throughput.pl -u %maUrl -w .1: -c .01: -r 86400 -s %col -d %row"
+        checkInterval: 60
+        retryInterval: 30
+        retryAttempts: 3
+        timeout: 60
+
+
+grids:
+
+    - name: "Pertes"
+      rows: "myHosts"
+      columns: "myHosts"
+      checks: 
+        - "owampLossCheck"
+        - "owampLossRevCheck"
+      rowOrder: "group"
+      colOrder: "group"
+      excludeSelf: 1
+      columnAlgorithm: "all" 
+      statusLabels:
+            ok: "Loss is 0"
+            warning: "Loss is greater than 0"
+            critical: "Loss is greater than 0.01"
+            unknown: "Unable to retrieve data"
+            notrun: "Check has not yet run"
+
+    - name: "Debits"
+      rows: "myHosts"
+      columns: "myHosts"
+      checks:
+        - "throughputCheck"
+        - "throughputRevCheck"
+      rowOrder: "group"
+      colOrder: "group"
+      excludeSelf: 1
+      columnAlgorithm: "all"
+      statusLabels:
+            ok: "Loss is 0"
+            warning: "Loss is greater than 0"
+            critical: "Loss is greater than 0.01"
+            unknown: "Unable to retrieve data"
+            notrun: "Check has not yet run"
+
+    - name: "Debits2"
+      rows: "myHosts"
+      columns: "myHosts"
+      checks:
+        - "owampLossCheck"
+        - "owampLossRevCheck"
+      rowOrder: "group"
+      colOrder: "group"
+      excludeSelf: 1
+      columnAlgorithm: "all"
+      statusLabels:
+            ok: "Loss is 0"
+            warning: "Loss is greater than 0"
+            critical: "Loss is greater than 0.01"
+            unknown: "Unable to retrieve data"
+            notrun: "Check has not yet run"
+
+
+
+dashboards:
+    - name: "PerfSONAR dashboard"
+      grids:
+        - name: "Pertes"
+        - name: "Debits"
+        - name: "Debits2"

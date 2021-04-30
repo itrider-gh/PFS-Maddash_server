@@ -29,8 +29,10 @@ firewall-cmd --reload
 
 import github repositories : git clone https://github.com/itrider-gh/PFS-Maddash_server.git
 
-Replace maddash YAML conf : - cd ~/PFS-Maddash_server
-                            - cp maddash-server /etc/maddash/
+Replace maddash YAML conf : 
+- cd ~/PFS-Maddash_server 
+- cp maddash-server /etc/maddash/
                        
-Replace maddash webui conf : - cd ~/PFS-Maddash_server
+Replace maddash webui conf : 
+- cd ~/PFS-Maddash_server
                              

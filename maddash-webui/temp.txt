@@ -1,0 +1,1 @@
+/usr/lib/maddash/maddash-webui/logo.png
